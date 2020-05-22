@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 import data_augmentation as da
 import matplotlib.pyplot as plt
+from cnn_net_model import CnnNet
 import torch
+import torch.nn as nn
 
 
 # Load mit-bih training dataset using pandas and convert to numpy. Divide into X and y.
@@ -45,7 +47,7 @@ plt.plot(time_axes, c3_sample, label="F: Fusion of ventricular and normal beat")
 plt.plot(time_axes, c4_sample, label="Q: Unclassifiable beat")
 plt.title("Each class normalized ECG signal sample")
 plt.xlabel("Time [ms]")
-plt.ylabel("value")
+plt.ylabel("Value")
 plt.legend()
 plt.show()
 
@@ -70,22 +72,29 @@ random_order = np.random.permutation(len(y_train_labels))
 y_train_labels = y_train_labels[random_order]
 x_train = x_train[random_order]
 
-# Determine train set size
-train_set_size = min(sum(y_train_labels == 0), sum(y_train_labels == 1), sum(y_train_labels == 2),
-                     sum(y_train_labels == 3), sum(y_train_labels == 4))
+# Determine train and test sets sizes
+train_class_size = min(sum(y_train_labels == 0), sum(y_train_labels == 1), sum(y_train_labels == 2),
+                       sum(y_train_labels == 3), sum(y_train_labels == 4))
+test_class_size = min(sum(y_test_labels == 0), sum(y_test_labels == 1), sum(y_test_labels == 2),
+                      sum(y_test_labels == 3), sum(y_test_labels == 4))
 
 # Delete redundant data
-ind_list = np.random.choice(np.argwhere(y_train_labels == 0).squeeze(), size=train_set_size)
-ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 1).squeeze(), size=train_set_size)))
-ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 2).squeeze(), size=train_set_size)))
-ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 3).squeeze(), size=train_set_size)))
-ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 4).squeeze(), size=train_set_size)))
+train_ind_list = np.random.choice(np.argwhere(y_train_labels == 0).squeeze(), size=train_class_size)
+test_ind_list = np.random.choice(np.argwhere(y_test_labels == 0).squeeze(), size=test_class_size)
 
-x_train = x_train[ind_list]
-y_train_labels = y_train_labels[ind_list]
+for i in range(1, 5):
+    train_ind_list = np.hstack((train_ind_list, np.random.choice(np.argwhere(y_train_labels == i).squeeze(),
+                                                                 size=train_class_size)))
+    test_ind_list = np.hstack((test_ind_list, np.random.choice(np.argwhere(y_test_labels == i).squeeze(),
+                                                               size=test_class_size)))
+
+x_train = x_train[train_ind_list]
+y_train_labels = y_train_labels[train_ind_list]
+x_test = x_test[test_ind_list]
+y_test_labels = y_test_labels[test_ind_list]
 
 # Cleanup
-del gen_data, gen_data_size, random_order, ind_list
+del gen_data, gen_data_size, random_order, train_ind_list
 
 
 # Reshape y vector to m x number of classes.
@@ -100,25 +109,61 @@ for i in range(5):
 del y_train_labels, y_test_labels
 
 
-# Wrap data with tensors and create dataloader for training set.
+# Wrap data with tensors and create dataloader for training and test set.
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-x_train_tensor = torch.tensor(x_train, dtype=torch.float64, device=device)
+x_train_tensor = torch.tensor(x_train, dtype=torch.float64, device=device).unsqueeze(1)
 y_train_tensor = torch.tensor(y_train, dtype=torch.float64, device=device)
-x_test_tensor = torch.tensor(x_test, dtype=torch.float64, device=device)
+x_test_tensor = torch.tensor(x_test, dtype=torch.float64, device=device).unsqueeze(1)
 y_test_tensor = torch.tensor(y_test, dtype=torch.float64, device=device)
 
-batch_size = 200
+batch_size = 500
 # noinspection PyUnresolvedReferences
-dataset = torch.utils.data.TensorDataset(x_train_tensor, y_train_tensor)
+train_dataset = torch.utils.data.TensorDataset(x_train_tensor, y_train_tensor)
 # noinspection PyUnresolvedReferences
-data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+# Build network model, choose optimizer and loss function.
+learning_rate = 0.0005
+net = CnnNet().to(device=device, dtype=torch.float64)
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 
 
-# TODO Build network model, choose optimizer and loss function.
-pass
+# Network training.
+test_loss_track = []
+train_loss_track = []
+epochs_number = 20
+for epoch in range(epochs_number):
+    for batch_num, data in enumerate(train_loader, 0):
+        inputs, labels = data
+        optimizer.zero_grad()
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        train_loss_track.append(loss.item())
 
-# TODO Network training.
-pass
+        # Printing log per batch
+        print(f"Epoch: {epoch+1:d},\tMini-batch: {batch_num+1:d},\tLoss: {loss.item():.4f}")
+
+    # Printing summary every epoch
+    test_outputs = net(x_test_tensor)
+    test_loss = criterion(test_outputs, y_test_tensor)
+    test_accuracy = sum(torch.max(test_outputs, 1)[1] == torch.max(y_test_tensor, 1)[1]).item() / y_test_tensor.shape[0]
+    print(f"Test loss: {test_loss.item():.4f},\tTest accuracy: {test_accuracy:.2f}")
+    test_loss_track.append(test_loss.item())
+
+
+# Plot learning results.
+plt.figure(figsize=(8, 4))
+plt.subplot(111)
+plt.plot(np.linspace(1, epochs_number, num=len(train_loss_track)), train_loss_track, label="Train loss")
+plt.plot(np.linspace(1, epochs_number, num=len(test_loss_track)), test_loss_track, label="Test loss")
+plt.title(f"Lr={learning_rate:.5f}, Batch_size={batch_size:d}")
+plt.xlabel("Epochs")
+plt.ylabel("Value")
+plt.legend()
+plt.show()
 
 # TODO Display metrics and confusion matrix.
 pass
