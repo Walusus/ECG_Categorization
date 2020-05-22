@@ -3,6 +3,7 @@ import numpy as np
 import data_augmentation as da
 import matplotlib.pyplot as plt
 from cnn_net_model import CnnNet
+import sklearn.metrics as mtr
 import torch
 import torch.nn as nn
 
@@ -132,7 +133,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 # Network training.
 test_loss_track = []
 train_loss_track = []
-epochs_number = 20
+epochs_number = 2
 for epoch in range(epochs_number):
     for batch_num, data in enumerate(train_loader, 0):
         inputs, labels = data
@@ -149,7 +150,7 @@ for epoch in range(epochs_number):
     # Printing summary every epoch
     test_outputs = net(x_test_tensor)
     test_loss = criterion(test_outputs, y_test_tensor)
-    test_accuracy = sum(torch.max(test_outputs, 1)[1] == torch.max(y_test_tensor, 1)[1]).item() / y_test_tensor.shape[0]
+    test_accuracy = mtr.accuracy_score(torch.max(y_test_tensor, 1)[1].cpu(), torch.max(test_outputs, 1)[1].cpu())
     print(f"Test loss: {test_loss.item():.4f},\tTest accuracy: {test_accuracy:.2f}")
     test_loss_track.append(test_loss.item())
 
@@ -165,8 +166,22 @@ plt.ylabel("Value")
 plt.legend()
 plt.show()
 
-# TODO Display metrics and confusion matrix.
-pass
 
-# TODO Save model weights
-pass
+# Display metrics and confusion matrix.
+test_outputs = net(x_test_tensor)
+true_labels, pred_labels = torch.max(y_test_tensor, 1)[1].cpu(), torch.max(test_outputs, 1)[1].cpu()
+
+accuracy = mtr.accuracy_score(true_labels, pred_labels)
+conf_mat = mtr.confusion_matrix(true_labels, pred_labels)
+class_report = mtr.classification_report(true_labels, pred_labels)
+
+print(f"\nTest set accuracy: {accuracy:.2f}")
+print(class_report)
+# TODO Display plot with confusion matrix.
+
+
+# Save model weights
+ans = input("Save model? [y/n]")
+if ans is 'y':
+    filename = input("Save as: ")
+    torch.save(net.state_dict(), "weights/" + filename + ".pt")
