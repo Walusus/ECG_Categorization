@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
+import data_augmentation as da
 import matplotlib.pyplot as plt
 import torch
+
 
 # Load mit-bih training dataset using pandas and convert to numpy. Divide into X and y.
 df_train = pd.read_csv("datasets/mitbih_train.csv", header=None)
@@ -53,7 +55,6 @@ del c0_sample, c1_sample, c2_sample, c3_sample, c4_sample, time_axes
 
 # TODO Augment training set (experiment with different values) and plot the result.
 pass
-
 
 # Reshape y vector to m x number of classes.
 y_train = np.zeros((y_train_labels.shape[0], 5))
