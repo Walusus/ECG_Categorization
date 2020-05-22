@@ -53,8 +53,40 @@ plt.show()
 del c0_sample, c1_sample, c2_sample, c3_sample, c4_sample, time_axes
 
 
-# TODO Augment training set (experiment with different values) and plot the result.
-pass
+# Augment training set (experiment with different values).
+gen_data_size = 0
+for i in range(3):
+    # Copying and modifying class 3 samples
+    gen_data = np.apply_along_axis(lambda x: da.modify_vector(x, .15), axis=1,
+                                   arr=x_train[np.argwhere(y_train_labels == 3), :])
+    gen_data_size += gen_data.shape[0]
+    x_train = np.vstack((x_train, gen_data.squeeze()))
+
+# Adding labels for created data
+y_train_labels = np.hstack((y_train_labels, np.ones(gen_data_size) * 3))
+
+# Shuffling dataset
+random_order = np.random.permutation(len(y_train_labels))
+y_train_labels = y_train_labels[random_order]
+x_train = x_train[random_order]
+
+# Determine train set size
+train_set_size = min(sum(y_train_labels == 0), sum(y_train_labels == 1), sum(y_train_labels == 2),
+                     sum(y_train_labels == 3), sum(y_train_labels == 4))
+
+# Delete redundant data
+ind_list = np.random.choice(np.argwhere(y_train_labels == 0).squeeze(), size=train_set_size)
+ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 1).squeeze(), size=train_set_size)))
+ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 2).squeeze(), size=train_set_size)))
+ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 3).squeeze(), size=train_set_size)))
+ind_list = np.hstack((ind_list, np.random.choice(np.argwhere(y_train_labels == 4).squeeze(), size=train_set_size)))
+
+x_train = x_train[ind_list]
+y_train_labels = y_train_labels[ind_list]
+
+# Cleanup
+del gen_data, gen_data_size, random_order, ind_list
+
 
 # Reshape y vector to m x number of classes.
 y_train = np.zeros((y_train_labels.shape[0], 5))
