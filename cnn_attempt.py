@@ -123,11 +123,19 @@ train_dataset = torch.utils.data.TensorDataset(x_train_tensor, y_train_tensor)
 # noinspection PyUnresolvedReferences
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
+
 # Build network model, choose optimizer and loss function.
-learning_rate = 0.001
 net = CnnNet().to(device=device, dtype=torch.float64)
-criterion = nn.MSELoss()
+# Load model weights
+ans = input("Load model? [y/n]")
+if ans is 'y':
+    filename = input("File name: ")
+    net.load_state_dict(torch.load(net.state_dict(), "weights/" + filename + ".pt"))
+    net.train()
+
+learning_rate = 0.001
 optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+criterion = nn.MSELoss()
 
 
 # Network training.
