@@ -7,7 +7,7 @@ class CnnNet(nn.Module):
     def __init__(self):
         super(CnnNet, self).__init__()
         self.input_conv = nn.Conv1d(1, 32, 5, padding=2)
-        self.rec_conv = nn.Conv1d(32, 32, 5, padding=2)
+        self.rec_convs = nn.ModuleList([nn.Conv1d(32, 32, 5, padding=2) for i in range(10)])
         self.activation = nn.ReLU()
         self.pool = nn.MaxPool1d(5, stride=2)
         self.fc1 = nn.Linear(64, 32)
@@ -17,10 +17,10 @@ class CnnNet(nn.Module):
     def forward(self, x):
         prev_x = self.input_conv(x)
 
-        for i in range(5):
-            x = self.rec_conv(prev_x)
+        for i in range(0, 10, 2):
+            x = self.rec_convs[i](prev_x)
             x = self.activation(x)
-            x = self.rec_conv(x) + prev_x
+            x = self.rec_convs[i + 1](x) + prev_x
             x = self.activation(x)
             prev_x = self.pool(x)
 

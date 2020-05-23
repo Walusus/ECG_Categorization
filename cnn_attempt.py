@@ -117,14 +117,14 @@ y_train_tensor = torch.tensor(y_train, dtype=torch.float64, device=device)
 x_test_tensor = torch.tensor(x_test, dtype=torch.float64, device=device).unsqueeze(1)
 y_test_tensor = torch.tensor(y_test, dtype=torch.float64, device=device)
 
-batch_size = 200
+batch_size = 500
 # noinspection PyUnresolvedReferences
 train_dataset = torch.utils.data.TensorDataset(x_train_tensor, y_train_tensor)
 # noinspection PyUnresolvedReferences
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
 # Build network model, choose optimizer and loss function.
-learning_rate = 0.0001
+learning_rate = 0.001
 net = CnnNet().to(device=device, dtype=torch.float64)
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
@@ -133,7 +133,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 # Network training.
 test_loss_track = []
 train_loss_track = []
-epochs_number = 75
+epochs_number = 20
 for epoch in range(epochs_number):
     for batch_num, data in enumerate(train_loader, 0):
         inputs, labels = data
