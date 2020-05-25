@@ -6,6 +6,7 @@ from cnn_net_model import CnnNet
 import sklearn.metrics as mtr
 import torch
 import torch.nn as nn
+import seaborn as sns
 
 
 # Load mit-bih training dataset using pandas and convert to numpy. Divide into X and y.
@@ -80,7 +81,7 @@ test_class_size = min(sum(y_test_labels == 0), sum(y_test_labels == 1), sum(y_te
                       sum(y_test_labels == 3), sum(y_test_labels == 4))
 
 # Delete redundant data
-train_ind_list = np.random.choice(np.argwhere(y_train_labels == 0).squeeze(), size=train_class_size)
+train_ind_list = np.random.choice(np.argwhere(y_train_labels == 0).squeeze(), size=train_class_size+1000)  # 1000 extra samples of the hardest class
 test_ind_list = np.random.choice(np.argwhere(y_test_labels == 0).squeeze(), size=test_class_size)
 
 for i in range(1, 5):
@@ -130,10 +131,10 @@ net = CnnNet().to(device=device, dtype=torch.float64)
 ans = input("Load model? [y/n]")
 if ans is 'y':
     filename = input("File name: ")
-    net.load_state_dict(torch.load(net.state_dict(), "weights/" + filename + ".pt"))
+    net.load_state_dict(torch.load("weights/" + filename + ".pt"))
     net.train()
 
-learning_rate = 0.001
+learning_rate = 1e-4
 optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 criterion = nn.MSELoss()
 
@@ -141,7 +142,7 @@ criterion = nn.MSELoss()
 # Network training.
 test_loss_track = []
 train_loss_track = []
-epochs_number = 20
+epochs_number = 75
 for epoch in range(epochs_number):
     for batch_num, data in enumerate(train_loader, 0):
         inputs, labels = data
@@ -180,12 +181,23 @@ test_outputs = net(x_test_tensor)
 true_labels, pred_labels = torch.max(y_test_tensor, 1)[1].cpu(), torch.max(test_outputs, 1)[1].cpu()
 
 accuracy = mtr.accuracy_score(true_labels, pred_labels)
-conf_mat = mtr.confusion_matrix(true_labels, pred_labels)
 class_report = mtr.classification_report(true_labels, pred_labels)
+conf_mat = mtr.confusion_matrix(true_labels, pred_labels)
+axis_sum = conf_mat.sum(axis=1)
+norm_conf_mat = np.apply_along_axis(lambda x: x / axis_sum, axis=0, arr=conf_mat)
 
 print(f"\nTest set accuracy: {accuracy:.2f}")
 print(class_report)
-# TODO Display plot with confusion matrix.
+
+# Plot confusion matrix
+class_labels = ['N', 'S', 'V', 'F', 'Q']
+plt.figure(figsize=(6, 6))
+sns.heatmap(norm_conf_mat, vmin=0., vmax=1., cmap="YlGnBu", annot=True, cbar=False,
+            square=True, xticklabels=class_labels, yticklabels=class_labels)
+plt.xlabel("Predicted values")
+plt.ylabel("Actual values")
+plt.title(f"Test set accuracy: {accuracy:.2f}")
+plt.show()
 
 
 # Save model weights
