@@ -1,24 +1,18 @@
 import os
 import torch
-import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import time as t
 from sklearn.metrics import confusion_matrix
-from bindsnet.network import load
-from bindsnet.learning import NoOp, WeightDependentPostPre
-from bindsnet.datasets import MNIST
+from bindsnet.learning import NoOp
 from bindsnet.encoding import poisson
 from bindsnet.network import load
 from bindsnet.network.monitors import Monitor
-from bindsnet.models import DiehlAndCook2015v2
-from bindsnet.evaluation import assign_labels, update_ngram_scores, proportion_weighting, ngram
+from bindsnet.evaluation import ngram
 from bindsnet.utils import get_square_weights, get_square_assignments
 from bindsnet.analysis.plotting import plot_input, plot_spikes, plot_weights, plot_assignments, plot_performance
-from torchvision import transforms
 
-from tem import confusion_path
-from utils import update_curves, print_results
+from mnist.utils import update_curves, print_results
 
 
 def main():

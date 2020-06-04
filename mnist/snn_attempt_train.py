@@ -7,10 +7,10 @@ from bindsnet.encoding import poisson
 from bindsnet.network import load
 from bindsnet.network.monitors import Monitor
 from bindsnet.models import DiehlAndCook2015v2
-from bindsnet.evaluation import assign_labels, update_ngram_scores, proportion_weighting
+from bindsnet.evaluation import assign_labels, update_ngram_scores
 from bindsnet.utils import get_square_weights, get_square_assignments
 from bindsnet.analysis.plotting import plot_input, plot_spikes, plot_weights, plot_assignments, plot_performance
-from utils import update_curves, print_results
+from mnist.utils import update_curves, print_results
 
 
 def main():
