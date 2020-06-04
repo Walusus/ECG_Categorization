@@ -184,7 +184,6 @@ accuracy = mtr.accuracy_score(true_labels, pred_labels)
 class_report = mtr.classification_report(true_labels, pred_labels)
 conf_mat = mtr.confusion_matrix(true_labels, pred_labels)
 axis_sum = conf_mat.sum(axis=1)
-norm_conf_mat = np.apply_along_axis(lambda x: x / axis_sum, axis=0, arr=conf_mat)
 
 print(f"\nTest set accuracy: {accuracy:.2f}")
 print(class_report)
@@ -192,8 +191,8 @@ print(class_report)
 # Plot confusion matrix
 class_labels = ['N', 'S', 'V', 'F', 'Q']
 plt.figure(figsize=(6, 6))
-sns.heatmap(norm_conf_mat, vmin=0., vmax=1., cmap="YlGnBu", annot=True, cbar=False,
-            square=True, xticklabels=class_labels, yticklabels=class_labels)
+sns.heatmap(conf_mat, cmap="YlGnBu", annot=True, cbar=False, square=True,
+            xticklabels=class_labels, yticklabels=class_labels)
 plt.xlabel("Predicted values")
 plt.ylabel("Actual values")
 plt.title(f"Test set accuracy: {accuracy:.2f}")
