@@ -17,7 +17,7 @@ class CnnNet(nn.Module):
         self.fc1 = nn.Linear(3136, 128)
         self.fc2 = nn.Linear(128, 10)
 
-        self.dropout = nn.Dropout(p=0.4)  # TODO test 2d dropout
+        self.dropout = nn.Dropout2d(p=0.4)
         self.norm1 = nn.BatchNorm2d(32)
         self.norm2 = nn.BatchNorm2d(64)
         self.norm3 = nn.BatchNorm1d(128)
