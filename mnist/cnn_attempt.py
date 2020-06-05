@@ -5,8 +5,9 @@ import torchvision.transforms as transforms
 import sklearn.metrics as mtr
 import numpy as np
 import seaborn as sns
-from mnist.cnn_net_model import CnnNet
 import gc
+import math
+from mnist.cnn_net_model import CnnNet
 
 
 # Check for cuda presence
@@ -35,20 +36,22 @@ for i in range(4):
 plt.show()
 
 # Initialize loaders
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=150, shuffle=True)
+train_batch_size = 150
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=train_batch_size, shuffle=True)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=250, shuffle=True)
 
 # Import network motel
 net = CnnNet().to(device=device)
 
 # Choose loss criterion, optimiser and learning rate
-optim = torch.optim.Adam(net.parameters(), lr=1e-5)
+learning_rate = 1e-5
+optim = torch.optim.Adam(net.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
-
+train_batch_num = math.ceil(len(train_set) / train_batch_size)
 test_loss_track = []
 train_loss_track = []
-epochs_num = 5
+epochs_num = 25
 for epoch in range(epochs_num):
     # Train network
     net.train()
@@ -60,10 +63,11 @@ for epoch in range(epochs_num):
         optim.step()
         train_loss_track.append(loss.item())
 
-        # Printing log each 2nd batch
+        # Printing log each 5th batch
         if batch_num % 5 == 0:
-            print(f"Epoch: {epoch:d}/{epochs_num:d} ({epoch/epochs_num*100:.1f}%),"
-                  f"\tMini-batch: {batch_num:d},\tLoss: {loss.item():f}")
+            print(f"Epoch: {epoch+1:d}/{epochs_num:d} ({(epoch+1)/epochs_num*100:.1f}%),"
+                  f"\tMini-batch: {batch_num+1:d} ({(batch_num+1)/train_batch_num*100:.1f}%),"
+                  f"\tLoss: {loss.item():f}")
         # Cleanup
         del inputs, outputs, labels, loss
         gc.collect()
@@ -93,7 +97,7 @@ plt.figure(figsize=(8, 4))
 plt.subplot(111)
 plt.plot(np.linspace(1, epochs_num, num=len(train_loss_track)), train_loss_track, label="Train loss")
 plt.plot(np.linspace(1, epochs_num, num=len(test_loss_track)), test_loss_track, label="Test loss")
-plt.title("title")
+plt.title(f"lr: {learning_rate:e}, batch size: {train_batch_size:d}")
 plt.xlabel("Epochs")
 plt.ylabel("Value")
 plt.legend()
@@ -102,7 +106,7 @@ plt.show()
 # Test network
 accuracy_sum = 0
 num = 0
-conf_mat = np.zeros((10, 10))
+conf_mat = np.zeros((10, 10), dtype=np.int)
 for batch_num, (inputs, labels) in enumerate(train_loader):
     outputs = net(inputs)
     _, pred_labels = outputs.cpu().detach().max(1)
@@ -112,12 +116,12 @@ for batch_num, (inputs, labels) in enumerate(train_loader):
         conf_mat[labels[i], pred_labels[i]] += 1
 
 accuracy = accuracy_sum / num
-print(f"\nTest set accuracy: {accuracy:.2f}")
+print(f"\nTest set accuracy: {100*accuracy:.1f}%")
 
 # Plot confusion matrix
-plt.figure(figsize=(6, 6))
-sns.heatmap(conf_mat, cmap="YlGnBu", annot=True, cbar=False, square=True)
-plt.xlabel("Predicted values")
-plt.ylabel("Actual values")
-plt.title(f"Test set accuracy: {accuracy:.2f}")
+plt.figure(figsize=(8, 8))
+sns.heatmap(conf_mat, cmap="YlGnBu", annot=True, fmt="d", cbar=False, square=True)
+plt.xlabel("Predicted label")
+plt.ylabel("Actual label")
+plt.title(f"Test set accuracy: {100*accuracy:.1f}%")
 plt.show()
