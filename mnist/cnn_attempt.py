@@ -53,14 +53,14 @@ if ans is 'y':
     net.load_state_dict(torch.load("weights/" + filename + ".pt"))
 
 # Choose loss criterion, optimiser and learning rate
-learning_rate = 1e-4
+learning_rate = 1e-3
 optim = torch.optim.Adam(net.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
 train_batch_num = math.ceil(len(train_set) / train_batch_size)
 test_loss_track = []
 train_loss_track = []
-epochs_num = 5
+epochs_num = 15
 for epoch in range(epochs_num):
     # Train network
     net.train()
@@ -106,7 +106,7 @@ plt.figure(figsize=(8, 4))
 plt.subplot(111)
 plt.plot(np.linspace(1, epochs_num, num=len(train_loss_track)), train_loss_track, label="Train loss")
 plt.plot(np.linspace(1, epochs_num, num=len(test_loss_track)), test_loss_track, label="Test loss")
-plt.title(f"Epochs: {epochs_num:d}, batch size: {train_batch_size:d}, lr: {learning_rate:e}")
+plt.title(f"Epochs: {epochs_num:d}, batch size: {train_batch_size:d}, lr: {learning_rate:.1e}")
 plt.xlabel("Epochs")
 plt.ylabel("Value")
 plt.legend()
@@ -137,4 +137,8 @@ plt.title(f"Test set accuracy: {100*accuracy:.1f}%")
 plt.savefig("plots/conf_mat.png")
 plt.show()
 
-
+# Save model weights
+ans = input("Save model? [y/n]")
+if ans is 'y':
+    filename = input("Save as: ")
+    torch.save(net.state_dict(), "weights/" + filename + ".pt")
