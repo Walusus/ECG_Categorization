@@ -46,6 +46,12 @@ test_loader = torch.utils.data.DataLoader(test_set, batch_size=250, shuffle=True
 net = CnnNet().to(device=device)
 summary(net, input_data=(1, 28, 28))
 
+# Load model weights
+ans = input("Load model? [y/n]")
+if ans is 'y':
+    filename = input("File name: ")
+    net.load_state_dict(torch.load("weights/" + filename + ".pt"))
+
 # Choose loss criterion, optimiser and learning rate
 learning_rate = 1e-4
 optim = torch.optim.Adam(net.parameters(), lr=learning_rate)
@@ -130,3 +136,5 @@ plt.ylabel("Actual label")
 plt.title(f"Test set accuracy: {100*accuracy:.1f}%")
 plt.savefig("plots/conf_mat.png")
 plt.show()
+
+

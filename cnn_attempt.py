@@ -198,7 +198,6 @@ plt.ylabel("Actual values")
 plt.title(f"Test set accuracy: {accuracy:.2f}")
 plt.show()
 
-
 # Save model weights
 ans = input("Save model? [y/n]")
 if ans is 'y':
