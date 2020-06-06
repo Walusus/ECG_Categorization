@@ -8,6 +8,7 @@ import seaborn as sns
 import gc
 import math
 from mnist.cnn_net_model import CnnNet
+from torchsummary import summary
 
 
 # Check for cuda presence
@@ -33,26 +34,27 @@ for i in range(4):
     plt.subplot(221 + i)
     plt.imshow(transforms.ToPILImage()(x.cpu()), cmap='gray')
     plt.title(f"Label: {y:d}")
-plt.show()
 plt.savefig("plots/class_samples.png")
+plt.show()
 
 # Initialize loaders
 train_batch_size = 150
 train_loader = torch.utils.data.DataLoader(train_set, batch_size=train_batch_size, shuffle=True)
 test_loader = torch.utils.data.DataLoader(test_set, batch_size=250, shuffle=True)
 
-# Import network motel
+# Import network motel and print summary
 net = CnnNet().to(device=device)
+summary(net, input_data=(1, 28, 28))
 
 # Choose loss criterion, optimiser and learning rate
-learning_rate = 1e-5
+learning_rate = 1e-4
 optim = torch.optim.Adam(net.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
 train_batch_num = math.ceil(len(train_set) / train_batch_size)
 test_loss_track = []
 train_loss_track = []
-epochs_num = 25
+epochs_num = 5
 for epoch in range(epochs_num):
     # Train network
     net.train()
@@ -102,8 +104,8 @@ plt.title(f"Epochs: {epochs_num:d}, batch size: {train_batch_size:d}, lr: {learn
 plt.xlabel("Epochs")
 plt.ylabel("Value")
 plt.legend()
-plt.show()
 plt.savefig("plots/train_report.png")
+plt.show()
 
 # Test network
 accuracy_sum = 0
@@ -126,5 +128,5 @@ sns.heatmap(conf_mat, cmap="YlGnBu", annot=True, fmt="d", cbar=False, square=Tru
 plt.xlabel("Predicted label")
 plt.ylabel("Actual label")
 plt.title(f"Test set accuracy: {100*accuracy:.1f}%")
-plt.show()
 plt.savefig("plots/conf_mat.png")
+plt.show()
