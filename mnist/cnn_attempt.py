@@ -34,6 +34,7 @@ for i in range(4):
     plt.imshow(transforms.ToPILImage()(x.cpu()), cmap='gray')
     plt.title(f"Label: {y:d}")
 plt.show()
+plt.savefig("plots/class_samples.png")
 
 # Initialize loaders
 train_batch_size = 150
@@ -97,11 +98,12 @@ plt.figure(figsize=(8, 4))
 plt.subplot(111)
 plt.plot(np.linspace(1, epochs_num, num=len(train_loss_track)), train_loss_track, label="Train loss")
 plt.plot(np.linspace(1, epochs_num, num=len(test_loss_track)), test_loss_track, label="Test loss")
-plt.title(f"lr: {learning_rate:e}, batch size: {train_batch_size:d}")
+plt.title(f"Epochs: {epochs_num:d}, batch size: {train_batch_size:d}, lr: {learning_rate:e}")
 plt.xlabel("Epochs")
 plt.ylabel("Value")
 plt.legend()
 plt.show()
+plt.savefig("plots/train_report.png")
 
 # Test network
 accuracy_sum = 0
@@ -125,3 +127,4 @@ plt.xlabel("Predicted label")
 plt.ylabel("Actual label")
 plt.title(f"Test set accuracy: {100*accuracy:.1f}%")
 plt.show()
+plt.savefig("plots/conf_mat.png")
