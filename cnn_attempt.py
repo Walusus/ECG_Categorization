@@ -7,6 +7,7 @@ import sklearn.metrics as mtr
 import torch
 import torch.nn as nn
 import seaborn as sns
+import gc
 
 
 # Load mit-bih training dataset using pandas and convert to numpy. Divide into X and y.
@@ -134,7 +135,7 @@ if ans is 'y':
     net.load_state_dict(torch.load("weights/" + filename + ".pt"))
     net.train()
 
-learning_rate = 1e-4
+learning_rate = 5e-4
 optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 criterion = nn.MSELoss()
 
@@ -156,12 +157,20 @@ for epoch in range(epochs_number):
         # Printing log per batch
         print(f"Epoch: {epoch+1:d},\tMini-batch: {batch_num+1:d},\tLoss: {loss.item():.4f}")
 
+        # Cleanup
+        del inputs, labels, outputs, loss
+        gc.collect()
+
     # Printing summary every epoch
     test_outputs = net(x_test_tensor)
     test_loss = criterion(test_outputs, y_test_tensor)
     test_accuracy = mtr.accuracy_score(torch.max(y_test_tensor, 1)[1].cpu(), torch.max(test_outputs, 1)[1].cpu())
     print(f"Test loss: {test_loss.item():.4f},\tTest accuracy: {test_accuracy:.2f}")
     test_loss_track.append(test_loss.item())
+
+    # Cleanup
+    del test_outputs, test_loss
+    gc.collect()
 
 
 # Plot learning results.
